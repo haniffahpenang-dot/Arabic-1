@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Al-Mu'allim · Quranic Arabic Tutor</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Noto+Naskh+Arabic:wght@400;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-ar" lang="ar" dir="rtl">المُعَلِّم</span>
+      <span class="brand-en">Quranic Arabic Tutor</span>
+    </div>
+    <nav class="tabs" role="tablist">
+      <button class="tab active" data-tab="lesson" role="tab">Lesson</button>
+      <button class="tab" data-tab="notebook" role="tab">Notebook</button>
+      <button class="tab" data-tab="mistakes" role="tab">Mistakes</button>
+      <button class="tab" data-tab="plan" role="tab">My plan</button>
+      <button class="tab" data-tab="progress" role="tab">Progress</button>
+    </nav>
+    <button class="icon-btn" id="settingsBtn" title="Settings" aria-label="Settings">⚙︎</button>
+  </header>
+
+  <div id="mockBanner" class="banner" hidden>Demo mode: the teacher gives sample replies only. Set ANTHROPIC_API_KEY on the server for real lessons.</div>
+
+  <!-- LESSON -->
+  <main id="tab-lesson" class="view lesson-view">
+    <aside class="setup card" id="setupPanel">
+      <h2>New lesson</h2>
+      <label>Lesson type
+        <select id="mode">
+          <option value="conversation">Conversation (speaking practice)</option>
+          <option value="passage">Passage study (understand an ayah range)</option>
+          <option value="roots">Root drill (vocabulary)</option>
+          <option value="haraka">Reading without haraka</option>
+          <option value="grammar">Grammar in context (nahw &amp; sarf)</option>
+        </select>
+      </label>
+
+      <div id="passageFields">
+        <label>From my plan
+          <select id="planMonthPick"></select>
+        </label>
+        <div id="planItems" class="chips"></div>
+        <label>Surah
+          <select id="surah"></select>
+        </label>
+        <div class="row">
+          <label>From ayah <input id="ayahFrom" type="number" min="1" value="1"></label>
+          <label>To ayah <input id="ayahTo" type="number" min="1" value="7"></label>
+        </div>
+        <label class="check"><input type="checkbox" id="usePassage" checked> Use this passage in the lesson</label>
+        <p class="hint" id="passageHint">Up to 40 ayahs per lesson.</p>
+      </div>
+
+      <label id="topicField">Topic (optional)
+        <input id="topic" type="text" placeholder="e.g. my family, my work, Ramadan">
+      </label>
+
+      <label>Explanations in
+        <select id="explanationLanguage">
+          <option value="english">English</option>
+          <option value="arabic">Simple Arabic</option>
+        </select>
+      </label>
+
+      <button class="primary" id="startBtn">Start lesson</button>
+      <p class="hint">Your mistakes and new words are saved automatically to the Mistakes and Notebook tabs.</p>
+    </aside>
+
+    <section class="lesson-main">
+      <div class="lesson-bar" id="lessonBar" hidden>
+        <span id="lessonLabel"></span>
+        <button class="ghost small" id="changeLesson">Change lesson</button>
+      </div>
+      <div class="card passage" id="passagePanel" hidden>
+        <div class="passage-head">
+          <div>
+            <strong id="passageTitle"></strong>
+            <a id="listenLink" target="_blank" rel="noopener">Listen on quran.com ↗</a>
+          </div>
+          <div class="toggles">
+            <label class="switch"><input type="checkbox" id="passageHarakat" checked> Harakat</label>
+            <label class="switch"><input type="checkbox" id="passageTranslation"> English</label>
+            <button class="ghost small" id="collapsePassage">Hide</button>
+          </div>
+        </div>
+        <div class="passage-body" id="passageBody" lang="ar" dir="rtl"></div>
+      </div>
+
+      <div class="chat card" id="chat" aria-live="polite">
+        <div class="empty" id="chatEmpty">
+          <p lang="ar" dir="rtl" class="ar big">السَّلَامُ عَلَيْكُمْ</p>
+          <p>Choose a lesson on the left and press <b>Start lesson</b>. Then tap the microphone and speak Arabic. The teacher will reply out loud and correct you.</p>
+        </div>
+      </div>
+
+      <div class="composer card">
+        <div class="status" id="status"></div>
+        <div class="composer-row">
+          <button class="mic" id="micBtn" title="Tap and speak" aria-label="Speak">
+            <svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true"><path fill="currentColor" d="M12 15a3 3 0 0 0 3-3V6a3 3 0 1 0-6 0v6a3 3 0 0 0 3 3Zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V22h2v-3.08A7 7 0 0 0 19 12h-2Z"/></svg>
+          </button>
+          <textarea id="input" rows="2" dir="auto" placeholder="اكتب هنا… or type in English"></textarea>
+          <button class="primary send" id="sendBtn">Send</button>
+        </div>
+        <div class="composer-options">
+          <label class="switch"><input type="checkbox" id="handsFree"> Hands-free (listen again after the teacher speaks)</label>
+          <select id="micLang" title="Language you are speaking">
+            <option value="ar-SA">🎙 Arabic</option>
+            <option value="en-US">🎙 English</option>
+          </select>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- NOTEBOOK -->
+  <main id="tab-notebook" class="view" hidden>
+    <div class="card">
+      <div class="view-head">
+        <h2>Vocabulary notebook <span class="count" id="vocabCount"></span></h2>
+        <div class="actions">
+          <input id="vocabSearch" type="search" placeholder="Search word, root or meaning">
+          <button class="ghost" id="exportAnki">Export for Anki (CSV)</button>
+        </div>
+      </div>
+      <p class="hint">Words the teacher taught you. In Anki: File → Import, choose the CSV, fields are Front, Back, Root, Example.</p>
+      <table class="table" id="vocabTable">
+        <thead><tr><th>Word</th><th>Root</th><th>Meaning</th><th>Quran example</th><th></th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </main>
+
+  <!-- MISTAKES -->
+  <main id="tab-mistakes" class="view" hidden>
+    <div class="card">
+      <div class="view-head">
+        <h2>Mistake log <span class="count" id="mistakeCount"></span></h2>
+        <div class="actions"><button class="ghost" id="exportMistakes">Export CSV</button></div>
+      </div>
+      <p class="hint">Your corrected mistakes, grouped by type. The same few types usually repeat. Fix those first.</p>
+      <div class="chips" id="mistakeStats"></div>
+      <div id="mistakeList"></div>
+    </div>
+  </main>
+
+  <!-- PLAN -->
+  <main id="tab-plan" class="view" hidden>
+    <div class="card">
+      <div class="view-head">
+        <h2>My 12-month plan</h2>
+        <div class="actions">
+          <label>Current month <select id="currentMonth"></select></label>
+        </div>
+      </div>
+      <div class="week-template">
+        <h3>Weekly routine (about 7–8 hours)</h3>
+        <ul>
+          <li><b>Weekdays, 30–60 min:</b> 15 min Anki (8 new roots) · 15–30 min close reading of ½–1 page · optional 10–15 min speaking lesson here.</li>
+          <li><b>Saturday, 2 h:</b> 20 min Anki · 40 min catch-up reading · 30 min <i>Reading without haraka</i> lesson on the week's pages · 30 min workbook unit.</li>
+          <li><b>Sunday, 2 h:</b> 20 min Anki · 40 min listening review · 40 min Arabic tafsir reading · 20 min <i>Conversation</i> lesson summarising the week in Arabic.</li>
+        </ul>
+      </div>
+      <div id="planMonths" class="plan-months"></div>
+    </div>
+  </main>
+
+  <!-- PROGRESS -->
+  <main id="tab-progress" class="view" hidden>
+    <div class="stats">
+      <div class="card stat"><div class="stat-num" id="statToday">0</div><div>minutes today</div></div>
+      <div class="card stat"><div class="stat-num" id="statStreak">0</div><div>day streak</div></div>
+      <div class="card stat"><div class="stat-num" id="statTotal">0</div><div>hours in total</div></div>
+      <div class="card stat"><div class="stat-num" id="statWords">0</div><div>words saved</div></div>
+    </div>
+    <div class="card">
+      <h2>Last 14 days (minutes speaking with the teacher)</h2>
+      <div class="bars" id="bars"></div>
+    </div>
+    <div class="card">
+      <h2>Backup</h2>
+      <p class="hint">Your data lives only in this browser. Download a backup now and then, or move it to another device.</p>
+      <div class="actions">
+        <button class="ghost" id="backupBtn">Download backup</button>
+        <label class="ghost file-btn">Restore backup<input type="file" id="restoreInput" accept="application/json" hidden></label>
+      </div>
+    </div>
+  </main>
+
+  <!-- SETTINGS -->
+  <dialog id="settingsDialog">
+    <form method="dialog" class="settings">
+      <h2>Settings</h2>
+      <label>Teacher's voice
+        <select id="voice"></select>
+      </label>
+      <p class="hint" id="voiceHint"></p>
+      <label>Speaking speed <span id="rateValue"></span>
+        <input type="range" id="rate" min="0.5" max="1.2" step="0.05">
+      </label>
+      <button type="button" class="ghost" id="testVoice">▶ Test voice</button>
+      <label class="check"><input type="checkbox" id="autoSpeak"> Read the teacher's replies aloud</label>
+      <label>Teacher's text
+        <select id="teacherHarakat">
+          <option value="show">With harakat</option>
+          <option value="hide">Without harakat (tap to reveal)</option>
+        </select>
+      </label>
+      <label class="check"><input type="checkbox" id="showTranslation"> Show English translations open</label>
+      <menu><button class="primary" value="close">Done</button></menu>
+    </form>
+  </dialog>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>
